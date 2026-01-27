@@ -1,0 +1,5 @@
+availability-domains.tf
+.terraform.lock.hcl
+node-pool-options.json
+notes.txt
+.terraform
