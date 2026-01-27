@@ -346,8 +346,8 @@ Because:
 
 OCI provides three authentication modes:
 
-| Auth Mode             | CLI | Terraform            |
-| --------------------- | --- | -------------------- |
+| Auth Mode             | CLI  | Terraform             |
+| --------------------- | ---  | --------------------  |
 | API Key (RSA signing) | ✅   | ✅                    |
 | Session / OAuth       | ✅   | ❌                    |
 | Instance Principal    | ✅   | ✅ (OCI compute only) |
