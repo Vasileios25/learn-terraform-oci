@@ -37,6 +37,6 @@ jobs:
       run: |
         kubectl \
           --token="${{ steps.create-oidc-token.outputs.idToken }}" \
-          --server="https://141.147.23.45:6443" \
+          --server="https://130.162.235.43:6443" \
           --insecure-skip-tls-verify \
           auth can-i --list
