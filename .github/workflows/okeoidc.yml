@@ -28,10 +28,12 @@ jobs:
           echo "::add-mask::${IDTOKEN}"
           echo "idToken=${IDTOKEN}" >> $GITHUB_OUTPUT
 
-      - name: Check Permissions in Kubernetes
+      - name: Decode OIDC Token
         run: |
-          kubectl \
-            --token=${{ steps.create-oidc-token.outputs.idToken }} \
-            --server="https://141.147.23.45:6443" \
-            --insecure-skip-tls-verify \
-            auth can-i --list
+          echo "${{ steps.create-oidc-token.outputs.idToken }}" > token.jwt
+          # print only the JWT payload
+          cut -d "." -f2 token.jwt | base64 -d | jq .
+
+
+
+    
