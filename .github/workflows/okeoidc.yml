@@ -8,32 +8,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write      # Needed for OIDC
+  contents: read       # Allows checkout if needed later
 
 jobs:
   oke-oidc:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create OIDC Token
-        id: create-oidc-token
-        run: |
-          AUDIENCE="oke-kubernetes-cluster"
-          OIDC_URL_WITH_AUDIENCE="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE"
-          IDTOKEN=$(curl \
-            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            -H "Accept: application/json; api-version=2.0" \
-            "$OIDC_URL_WITH_AUDIENCE" | jq -r .value)
-          echo "::add-mask::${IDTOKEN}"
-          echo "idToken=${IDTOKEN}" >> $GITHUB_OUTPUT
+    - name: Create OIDC Token
+      id: create-oidc-token
+      run: |
+        AUDIENCE="oke-kubernetes-cluster"
+        OIDC_URL_WITH_AUDIENCE="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE"
+        IDTOKEN=$(curl \
+          -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          -H "Accept: application/json; api-version=2.0" \
+          "$OIDC_URL_WITH_AUDIENCE" | jq -r .value)
+        echo "::add-mask::${IDTOKEN}"
+        echo "idToken=${IDTOKEN}" >> $GITHUB_OUTPUT
 
-      - name: Decode OIDC Token
-        run: |
-          echo "${{ steps.create-oidc-token.outputs.idToken }}" > token.jwt
-          # print only the JWT payload
-          cut -d "." -f2 token.jwt | base64 -d | jq .
+    - name: Decode OIDC Token (debug)
+      run: |
+        echo "${{ steps.create-oidc-token.outputs.idToken }}" > token.jwt
+        cut -d "." -f2 token.jwt | base64 -d | jq .
 
-
-
-    
+    - name: Check Kubernetes Permissions
+      run: |
+        kubectl \
+          --token="${{ steps.create-oidc-token.outputs.idToken }}" \
+          --server="https://141.147.23.45:6443" \
+          --insecure-skip-tls-verify \
+          auth can-i --list
