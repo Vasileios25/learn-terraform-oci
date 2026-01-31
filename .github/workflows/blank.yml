@@ -1,0 +1,43 @@
+name: Deploy NGINX to OKE
+
+on:
+  push:
+    branches: ["dev"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-nginx:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Get OIDC Token
+      id: auth
+      run: |
+        AUDIENCE="oke-kubernetes-cluster"
+        OIDC_URL="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE"
+        IDTOKEN=$(curl \
+          -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          -H "Accept: application/json; api-version=2.0" \
+          "$OIDC_URL" | jq -r .value)
+        echo "::add-mask::$IDTOKEN"
+        echo "IDTOKEN=$IDTOKEN" >> $GITHUB_ENV
+
+    - name: Deploy NGINX to OKE
+      run: |
+        kubectl \
+          --token="$IDTOKEN" \
+          --server="https://130.162.235.43:6443" \
+          --insecure-skip-tls-verify \
+          apply -f server.yml
+
+        kubectl \
+          --token="$IDTOKEN" \
+          --server="https://130.162.235.43:6443" \
+          --insecure-skip-tls-verify \
+          rollout status deployment/nginx-deployment
